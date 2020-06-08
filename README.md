@@ -86,13 +86,19 @@ First build the image with:
 <pre><code># index.html 에서 keycloak 사이트 접근할 때 localhost:8080 으로 접근합니다. VM기반에서는 그렇게 하면 에러나니 수정해야 합니다. 
 cd ${keycloak-containers-demo-directory}
 sed -i -e 's/localhost:8080/keycloak.k8s.com:8080/' js-console/src/index.html
+sed -i 's/localhost:8080/keycloak.k8s.com:8080/' js-console/src/keycloak.json
 docker build -t demo-js-console js-console    # 수정 후 빌드
 </code></pre>
+
+※ 이것은 다음을  의미합니다: 
+1) 웹 어플리케이션에서는 SSO를 위해 keycloak 의 로그인 창을 접근한다는 것
+2) 웹 어플리케이션에서 인증을 얻기 위해 <code> var kc = Keycloak(); </code> 와 같은 코드를 사용하는데, 
+   이 때 인자가 없으면 웹 어플리케이션 자신의 /keycloak.json 정보를 보낸다는 것 (어떤 realm과 어떤 url을 사용하는지)
+3) 위 두 개에서 문제가 있으면 (이를테면 localhost 같이 엉뚱한 곳을 바라본다면) 인증이 안된다는 것
 
 Then run it with:
 
     docker run --name demo-js-console -p 8000:80 demo-js-console
-
 
 
 ## Creating the realm
