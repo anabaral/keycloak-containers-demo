@@ -1,5 +1,19 @@
 # A deep dive into Keycloak
 
+Keycloak을 실습해 보기 좋은 데모가 구성되어 있어 fork 해 왔습니다.
+이 데모는 docker를 설치한 일반 PC에서 사용하기 위한 구성인데, 저는 궁극적으로 virtualbox 위의 kubernetes 에서 띄울 생각이고 
+그 중간단계로서 virtualbox 위의 VM에서 이를 구동시킬 생각입니다. 원본을 가능한 건드리지 않되 필요한 부분은 ※ 표시와 함께 추가할 것입니다.
+
+※ 먼저 VM에 접속한 상태라고 가정합니다. VM에는 docker가 깔려 있겠죠.
+   그리고 다음 명령으로 jdk를 설치해 둡니다.
+<pre><code>sudo apt install default-jdk </code></pre>
+
+※ PC가 Windows라는 가정하에, %windir%\system32\drivers\etc\hosts 파일을 수정합니다. 제 다른 프로젝트 (virtualbox에 kubernetes 띄우기) 에서도 비슷한 일을 했습니다.
+<pre><code>192.128.205.10   keycloak.k8s.com </code></pre>
+
+※ 적당한 디렉터리에서 이 프로젝트를 가져옵니다.
+<pre><code>git clone https://github.com/anabaral/keycloak-containers-demo</code></pre>
+
 This project contains a DIY deep dive into Keycloak.
 
 The steps included here requires Docker (or Podman). It should also be possible to replicate the steps without Docker by
@@ -31,6 +45,8 @@ Finally run it with:
     docker run --name demo-keycloak -e KEYCLOAK_USER=admin -e KEYCLOAK_PASSWORD=admin \
         -p 8080:8080 --net demo-network demo-keycloak
 
+※ 이걸로 끝이 아닙니다. 아래에 추가할게요.
+
 ### Start LDAP server
 
 For the LDAP part of the demo we need an LDAP server running.
@@ -51,7 +67,9 @@ server that can used for testing.
 Start the mail server with:
 
     docker run -d -p 8025:8025 --name demo-mail --net demo-network mailhog/mailhog
-    
+
+※ 1025 포트도 열어야 하는데 자기가 알아서 열더군요.
+
 ### Start JS Console application
 
 The JS Console application provides a playground to play with tokens issued by Keycloak.
@@ -71,8 +89,22 @@ Then run it with:
 Open [Keycloak Admin Console](http://localhost:8080/auth/admin/). Login with
 username `admin` and password `admin`.
 
+※ VM이라 localhost로는 브라우저 접속이 안됩니다. http://keycloak.k8s.com:8080/auth/admin 으로 접속해야 합니다.
+※ 그러나 그걸로도 부족합니다. ssl required 라는 메시지가 나올 겁니다. 다음을 실행해 주세요.
+<pre><code>$ docker exec -i -t demo-keycloak sh
+sh-4.4$ cd /opt/jboss/keycloak/bin
+sh-4.4$ ./kcadm.sh config credentials --server http://localhost:8080/auth --realm master --user admin
+-password 입력-
+sh-4.4$ ./kcadm.sh update realms/master -s sslRequired=NONE
+</code></pre>
+※ 이 실행은 임시방편으로 재시작하면 리셋될 가능성이 있습니다. keycloak을 k8s 기반으로 설치하면 이런 메시지 안나오니 데모의 한계라 생각하고 일단 이렇게 씁시다.
+
 Create a new realm called `demo` (find the `add realm` button in the drop-down
 in the top-left corner). 
+
+※ 데모 렐름 추가 후 다시 실행해 줘야 합니다:
+<pre><code>sh-4.4$ ./kcadm.sh update realms/demo -s sslRequired=NONE</code></pre>
+※ 이 명령어 사용법 잘 알아두면 나중에 자동화 할 수 있을지도..?
 
 Once created set a friendly Display name for the realm, for 
 example `Demo SSO`.
