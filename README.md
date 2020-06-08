@@ -45,7 +45,11 @@ Finally run it with:
     docker run --name demo-keycloak -e KEYCLOAK_USER=admin -e KEYCLOAK_PASSWORD=admin \
         -p 8080:8080 --net demo-network demo-keycloak
 
-※ 이걸로 끝이 아닙니다. 아래에 추가할게요.
+※ VM으로 띄울 때는 호스트 설정이 중요하니 위에처럼 실행하지 마시고 아래처럼 실행해 주세요:
+<pre><code>docker run --name demo-keycloak -e KEYCLOAK_USER=admin -e KEYCLOAK_PASSWORD=admin \
+-e KEYCLOAK_HOSTNAME=keycloak.k8s.com -p 8080:8080 --net demo-network demo-keycloak </code></pre>
+
+※ 이걸로 끝이 아닙니다. 띄우고 나서 추가로 해야 할 게 있는데 아래에 추가할게요.
 
 ### Start LDAP server
 
@@ -77,7 +81,14 @@ The JS Console application provides a playground to play with tokens issued by K
 First build the image with:
 
     docker build -t demo-js-console js-console
-    
+
+※ 이걸 바로 하면 안됩니다. 다음을 실행해 주세요.
+<pre><code># index.html 에서 keycloak 사이트 접근할 때 localhost:8080 으로 접근합니다. VM기반에서는 그렇게 하면 에러나니 수정해야 합니다. 
+cd ${keycloak-containers-demo-directory}
+sed -i -e 's/localhost:8080/keycloak.k8s.com:8080/' js-console/src/index.html
+docker build -t demo-js-console js-console    # 수정 후 빌드
+</code></pre>
+
 Then run it with:
 
     docker run --name demo-js-console -p 8000:80 demo-js-console
@@ -90,6 +101,7 @@ Open [Keycloak Admin Console](http://localhost:8080/auth/admin/). Login with
 username `admin` and password `admin`.
 
 ※ VM이라 localhost로는 브라우저 접속이 안됩니다. http://keycloak.k8s.com:8080/auth/admin 으로 접속해야 합니다.
+
 ※ 그러나 그걸로도 부족합니다. ssl required 라는 메시지가 나올 겁니다. 다음을 실행해 주세요.
 <pre><code>$ docker exec -i -t demo-keycloak sh
 sh-4.4$ cd /opt/jboss/keycloak/bin
@@ -97,7 +109,7 @@ sh-4.4$ ./kcadm.sh config credentials --server http://localhost:8080/auth --real
 -password 입력-
 sh-4.4$ ./kcadm.sh update realms/master -s sslRequired=NONE
 </code></pre>
-※ 이 실행은 임시방편으로 재시작하면 리셋될 가능성이 있습니다. keycloak을 k8s 기반으로 설치하면 이런 메시지 안나오니 데모의 한계라 생각하고 일단 이렇게 씁시다.
+※ 이 실행은 임시방편으로 재시작하면 리셋될 가능성이 있습니다. k8s 기반의 keycloak을 독립적으로 설치할 때는 이런 메시지 안나오니 데모의 한계라 생각하고 일단 이렇게 씁시다.
 
 Create a new realm called `demo` (find the `add realm` button in the drop-down
 in the top-left corner). 
@@ -123,6 +135,8 @@ On the next form fill in the following values:
 * Valid Redirect URIs: `http://localhost:8000/*`
 * Web Origins: `http://localhost:8000`
 
+※ 물론 `http://keycloak.k8s.com:8000/*` 과 `http://keycloak.k8s.com:8000` 로 작성해야 합니다.
+
 ## Configuring SMTP server
 
 First lets set a email address on the admin user so we can test email delivery.
@@ -140,12 +154,17 @@ Fill in the following values:
 Click `Save` and `Test connection`. Open your http://localhost:8025 and check that you have
 received an email from Keycloak.
 
+※ 위의 Test Connection에서 그냥은 실패할 겁니다. 포트를 1025로 설정해야 합니다. 그리고 나서 http://keycloak.k8s.com:8025 를 열면 
+   keycloak@localhost 로부터 admin@localhost 에게로 메일이 와 있을 겁니다.
+
 ## Enable user registration
 
 Let's enable user self-registration and at the same time require users to verify
 their email address.
 
 Open the [Keycloak Admin Console](http://localhost:8080/auth/admin/). 
+
+※ 물론 http://keycloak.k8s.com:8080/auth/admin 입니다.
 
 Click on `Realm settings` then `Login`.
 
@@ -159,6 +178,12 @@ To try this out open the [JS Console](http://localhost:8000).
 You will be automatically redirected to the login screen. Click on `Register` 
 and fill in the form. After registering you will be prompted to verify your email
 by clicking on a link in an email sent to your email address.
+
+※ 이건 좀 이상하네요. 메일주소를 뭘로 써도 admin@demo-host 에게 갑니다. 
+   (메시지엔 이를테면 To: anabaral@gmail.com 으로 쓰여 있으면서)
+   설정을 좀 더 확인해야 할 듯.
+※ 아무튼 verify e-mail 링크를 클릭하면 다시 JS Console 화면으로 가지만 Init Error라는 메시지가 보입니다. 
+   이건 keycloak 으로 보내야 할 인증요청이 localhost 로 가기 때문인데..
 
 ## Adding claims to the tokens
 
