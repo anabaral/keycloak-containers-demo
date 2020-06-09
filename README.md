@@ -489,6 +489,8 @@ Click on `Actions` and `Delete` for `Username Password Form` and `OTP Form`.
 Click on `Actions` next to `Browser-email forms`. Then click on `Add execution`.
 Select `Magic Link` from the list. Once it's saved select `Required` for the `Magic Link`.
 
+※ My Browser Flow Browser - Conditional OTP 의 Actions 입니다.
+
 Now to use this new flow when users login select `Bindings` and select `My Browser Flow` for the
 `Browser flow`.
 
