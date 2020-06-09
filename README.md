@@ -570,6 +570,16 @@ Keycloak은 아무런 설정을 하지 않으면 자체 h2 db 를 사용합니�
                 &lt;/datasource&gt;
 </code></pre>
 
+# jenkins
+
+jenkins 를 쓰기 위해 다음을 준비했습니다:
+<pre><code>docker run -p 9080:8080 --name jenkins --net demo-network --add-host keycloak.k8s.com:192.128.205.10  jenkins/jenkins</code></pre>
+
+jenkins는 브라우저 통신만으로 토큰을 받아오는 js-console 과 달리 어플 내부에서 직접 keycloak을 접근하려 하기 때문에 add-host 옵션 없이 실행하면 connection timed-out 나는 경우가 생깁니다.
+
+설정은 https://plugins.jenkins.io/keycloak/ 을 참조했습니다.
+
+
 
 ## Cool stuff we didn't cover!
 
