@@ -8,8 +8,10 @@ Keycloak을 실습해 보기 좋은 데모가 구성되어 있어 fork 해 왔�
    그리고 다음 명령으로 jdk를 설치해 둡니다.
 <pre><code>sudo apt install default-jdk </code></pre>
 
-※ PC가 Windows라는 가정하에, %windir%\system32\drivers\etc\hosts 파일을 수정합니다. 제 다른 프로젝트 (virtualbox에 kubernetes 띄우기) 에서도 비슷한 일을 했습니다.
-<pre><code>192.128.205.10   keycloak.k8s.com </code></pre>
+※ PC가 Windows라는 가정하에, %windir%\system32\drivers\etc\hosts 파일을 수정합니다. 제 다른 프로젝트 (virtualbox에 kubernetes 띄우기) 에서도 비슷한 일을 했습니다. 
+<pre><code>192.128.205.10   keycloak.k8s.com  demo.k8s.com</code></pre>
+
+※ 여기서는 keycloak 이 뜨는 호스트와 클라이언트(demo) 가 뜨는 호스트가 동일합니다. 당연히 실 환경에선 다를 수 있죠.
 
 ※ 적당한 디렉터리에서 이 프로젝트를 가져옵니다.
 <pre><code>git clone https://github.com/anabaral/keycloak-containers-demo</code></pre>
@@ -141,7 +143,7 @@ On the next form fill in the following values:
 * Valid Redirect URIs: `http://localhost:8000/*`
 * Web Origins: `http://localhost:8000`
 
-※ 물론 `http://keycloak.k8s.com:8000/*` 과 `http://keycloak.k8s.com:8000` 로 작성해야 합니다.
+※ 물론 `http://demo.k8s.com:8000/*` 과 `http://demo.k8s.com:8000` 로 작성해야 합니다.
 
 ## Configuring SMTP server
 
@@ -181,17 +183,24 @@ Fill in the following values:
 
 To try this out open the [JS Console](http://localhost:8000). 
 
+※ http://demo.k8s.com:8000 입니다.
+
 You will be automatically redirected to the login screen. Click on `Register` 
 and fill in the form. After registering you will be prompted to verify your email
 by clicking on a link in an email sent to your email address.
 
-※ 이건 좀 이상하네요. 메일주소를 뭘로 써도 admin@demo-host 에게 갑니다. 
-   (메시지엔 이를테면 To: anabaral@gmail.com 으로 쓰여 있으면서)
-   설정을 좀 더 확인해야 할 듯.
-※ 아무튼 verify e-mail 링크를 클릭하면 다시 JS Console 화면으로 가지만 Init Error라는 메시지가 보입니다. 
-   이건 keycloak 으로 보내야 할 인증요청이 localhost 로 가기 때문인데..
+※ 이 환경에서는 메일주소를 뭘로 써도 admin@demo-host 에게 갑니다. Gmail 같은 외부메일을 설정해도 그렇습니다.
+   아마 실습 환경이 폐쇄환경이다 보니 원활한 실습을 위해 일부러 깔려있는 메일서버에만 보내는 걸 수 있습니다.
+
+※ 만약 js-console 빌드할 때 적절한 수정을 하지 않았을 경우, verify e-mail 링크를 클릭하면 다시 JS Console 화면으로 가지만 
+   Init Error라는 메시지가 보일 겁니다. 이건 keycloak 으로 보내야 할 인증요청이 localhost 로 가기 때문입니다. 위로 올라가 다시 빌드하세요.
+   물론 잘 고치셨으면 잘 갈 겁니다.
 
 ## Adding claims to the tokens
+
+※ 이 대목은 특정 속성을 부여하여 이를 클라이언트에게 주는 토큰에 포함시켜 공유하는 방법을 기술합니다. 
+   이를테면 아바타 이미지 URL을 공유하여 로그인한 사람의 사진을 보여줄 수 있겠죠.
+   여기에 사용자 속성과 클라이언트 범위 사용법을 알 수 있습니다. 이걸 어떻게 쓰느냐는 어플리케이션에서 구현하기 나름입니다.
 
 What if your applications want to know something else about users? Say you want to have
 an avatar available for your users.
@@ -240,6 +249,8 @@ Now go back to the JS Console and click `Refresh`.
 
 ## Require consent for the application
 
+※ 모바일에서 익히 보는 화면 (제3자 어플에 대한 사용자 권한 사용 동의) 띄우기 설정입니다.
+
 So far we've assumed the JS Console is an internal trusted application, but what if it's
 a third party application? In that case we probably want the user to grant access to what the application wants to have 
 access to.
@@ -254,6 +265,8 @@ access to the application.
 You may want to turn this off again before continuing.
 
 # Roles and groups
+
+※ 아시는 권한과 그룹 설정입니다.
 
 Keycloak has supports for both roles and groups.
 
@@ -270,6 +283,8 @@ Let's start by creating a role and see it in the token.
 
 Open the [Keycloak Admin Console](http://localhost:8080/auth/admin/). 
 
+※ http://keycloak.k8s.com:8080/auth/admin 입니다. 뒤에도 나오는데 주의.
+
 Click on `Roles` and `Add Role`. Set the Role Name to `user` and click `Save`.
 
 Now click on `Users` and find the user you want to login with. Click on `Role Mappings`. 
@@ -277,6 +292,8 @@ Select `user` from Available roles and click `Add selected`.
 
 Go back to the [JS Console](http://localhost:8000) and click `Refresh`, then `Access Token JSON`.
 Notice that there is a `realm_access` claim in the token that now contains the user role.
+
+※ http://demo.k8s.com:8080 뒤에도 나옵니다.
 
 Next let's create a Group. Go back to the [Keycloak Admin Console](http://localhost:8080/auth/admin/).
 
@@ -308,7 +325,14 @@ Find the `js-console` client again and add the `myclaim` as a default client sco
 Go back to the [JS Console](http://localhost:8000) and click `Refresh`, then `Access Token JSON`.
 Notice that there is a `groups` claim in the token as well as a `user_type` claim.
 
+※ group은 사용자가 group에 속하지 않으면 토큰에는 그냥 빈 배열 [] 만 보입니다. 사용자를 group에 속하게 해 보세요.
+
+※ 위의 avatar_url 할 때 알수있지만 클라이언트 스코프에 User Attribute라고 지정한 것은 
+   각 사용자의 속성(user_type)으로 지정한 값을 토큰에 포함시키겠다는 의미입니다. 사용자에게 지정된 값이 없으면 아예 안보입니다.
+
 ## Users from LDAP
+
+※ LDAP에 있는 사용자를 포함시키기.
 
 Now let's try to load users from LDAP into Keycloak.
 
@@ -334,6 +358,8 @@ Try opening the [JS Console](http://localhost:8000) again and login with one of
 these users.
 
 ## Users from GitHub
+
+※ 이건 아직(2020-06-09 현재) 성공 못시켰습니다. 입력해야 할 게 뭐가 좀 달라요.
 
 Now that we have users in Keycloak as well as loading users from LDAP let's get users
 from an external Identity Provider. For simplicity we'll use GitHub, but the same 
@@ -373,6 +399,9 @@ Notice how it automatically knows your name and also has your avatar.
 
 ## Style that login
 
+※ keycloak 제공 로그인화면을 조금 바꿀 수 있는 것 같은데 
+   어떻게 개발할 지까지는 설명되어 있지 않아 다른 곳을 찾아야 할 거 같습니다.
+
 Perhaps you don't want the login screen to look like a Keycloak login screen, but rather 
 add a splash of your own styling to it?
 
@@ -390,6 +419,8 @@ new login screen!
 You may want to change it back before you continue ;).
 
 ## Keys and Signing Algorithms
+
+※ 키와 암호화 알고리즘 변경에 관한 내용인데, 바꾸는 건 쉽지만 당장 바꿀 일이...
 
 By default Keycloak signs tokens with RS256, but we have support for other signing
 algorithms. We also have support for a single realm to have multiple keys.
@@ -444,6 +475,8 @@ without affecting any logged-in users.
 
 ## Sessions
 
+※ 로그인 한 세션을 한 눈에 파악하고 모두 날려버릴 수 있습니다.
+
 Make sure you have the [JS Console](http://localhost:8000) open in a tab and you're logged-in.
 Open the [Keycloak Admin Console](http://localhost:8080/auth/admin/) in another tab.
 
@@ -456,6 +489,8 @@ Not only can admins log out users, but users themselves can logout other session
 account management console.
 
 ## Events
+
+※ 이벤트 로깅 설정
 
 Open the [Keycloak Admin Console](http://localhost:8080/auth/admin/). Click on `Events`
 and `Config`. Turn on `Save Events` and click `Save`.
@@ -471,6 +506,9 @@ and account management console, but you can develop your own event listener that
 do what you want with the events.
 
 # Custom stuff
+
+※ 인증 방법을 커스텀 조정 할 수 있다고 합니다. 여기서 보여주는 예는 
+   기존의 username/password 방식을 --> 이메일 링크 인증 방식으로 바꿔주는 예 입니다.
 
 Keycloak has a huge number of SPIs that allow you to develop your own custom providers.
 You can develop custom user stores, protocol mappers, authenticators, event listeners
@@ -506,6 +544,31 @@ Select `Required Actions`, `Register`, then select `WebAuthn Register` and click
 
 Open the [JS Console](http://localhost:8000) and click Logout. Login again. After you've done the
 email based login you will be prompted to configure WebAuthn. You'll need a WebAuthn security key to try this out.
+
+## 그 외 추가합니다
+
+# 저장 값들 유지
+
+현재 깔리는 Keycloak은 재시작하면 모든 설정을 잃어버립니다. 이걸 막으려면 다음 디렉터리를 storage 로 연결해야 합니다.
+<pre><code>/opt/jboss/keycloak/standalone/data</pre></code>
+
+# database 연결
+
+Keycloak은 아무런 설정을 하지 않으면 자체 h2 db 를 사용합니다. 이 데이터는 위의 .../standalone/data 밑에 생성되므로 
+당장 쓰기에는 무리는 없습니다만 별도 DB를 사용하겠자면 아래 설정을 건드려야 합니다:
+<pre><code>$ vi /opt/jboss/keycloak/standalone/configuration/standalone.xml
+...
+&lt;server xmlns="urn:jboss:domain:12.0"&gt;
+...
+    &lt;profile&gt;
+    ...
+        &lt;subsystem xmlns="urn:jboss:domain:datasources:5.0"&gt;
+            &lt;datasources&gt;
+                &lt;datasource jndi-name="java:jboss/datasources/KeycloakDS" ...&gt;
+                ...
+                &lt;/datasource&gt;
+</code></pre>
+
 
 ## Cool stuff we didn't cover!
 
