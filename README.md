@@ -575,11 +575,29 @@ Keycloak은 아무런 설정을 하지 않으면 자체 h2 db 를 사용합니�
 jenkins 를 쓰기 위해 다음을 준비했습니다:
 <pre><code>docker run -p 9080:8080 --name jenkins --net demo-network --add-host keycloak.k8s.com:192.128.205.10  jenkins/jenkins</code></pre>
 
-jenkins는 브라우저 통신만으로 토큰을 받아오는 js-console 과 달리 어플 내부에서 직접 keycloak을 접근하려 하기 때문에 add-host 옵션 없이 실행하면 connection timed-out 나는 경우가 생깁니다.
+jenkins는 브라우저 통신만으로 토큰을 받아오는 js-console 과 달리 어플 내부에서 직접 keycloak을 접근하려 하기 때문에 add-host 옵션 없이 실행하면 connection timed-out 날 수 있습니다.
 
-설정은 https://plugins.jenkins.io/keycloak/ 을 참조했습니다.
+설정은 https://plugins.jenkins.io/keycloak/ 을 참조했습니다. 이 참조만으로 충분하겠지만 아래에 간략히 내용을 정리합니다.
 
-
+- jenkins 접속
+- keycloak 에서 다음을 설정
+  - Add Realm : ci
+  - Realm Setting 에서: Login 탭 - "require ssl"=none
+  - Add Client:
+    - client id: jenkins
+    - root url: 접속 url. jenkins 처음 접속할 때 보임. 예) http://jenkins.k8s.com:9080/ 
+    - installation 탭 - format option을 keycloak oidc json 으로 선택하면 json 텍스트가 보이는데 이를 복사
+- jenkins 에서
+  - '시스템 설정' 에서 keycloak json 붙여넣는 대목이 있음. 위의 텍스트를 붙여넣기.
+  - 'validate each request' 라는 체크박스는 비워둠. (필요할 수도 있지만.. 테스트해보면 비워둘 때 문제는 없었음)
+  - 'Configure Global Security' 에서 Access Control 을 수정
+    - Security Realm : Keycloak Authentication Plugin
+    - Authorization : Logged-in users can do anything (일단 관리자 급의 권한을 주었음)
+  - Save 하고 Logout 하면 keycloak 통해 로그인하게 되는데, 돌이킬 수 없게 되니 Logout 하기 전에 다른 브라우저에서 테스트하십시오.
+  - 만약 돌이키고(?) 싶다면, 
+    - /var/jenkins_home 디렉터리 밑을 storage 로 두어 재시작할 때 리셋되지 않게 했어야 하고
+    - /var/jenkins_home/config.xml 파일의 이전 상태를 백업해 둡니다. 
+    - 설정에 문제가 생기면 원복하고 재시작하면 됩니다.
 
 ## Cool stuff we didn't cover!
 
