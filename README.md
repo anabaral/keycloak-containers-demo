@@ -122,9 +122,10 @@ sh-4.4$ ./kcadm.sh update realms/master -s sslRequired=NONE
 Create a new realm called `demo` (find the `add realm` button in the drop-down
 in the top-left corner). 
 
-※ 데모 렐름 추가 후 다시 실행해 줘야 합니다:
-<pre><code>sh-4.4$ ./kcadm.sh update realms/demo -s sslRequired=NONE</code></pre>
-※ 이 명령어 사용법 잘 알아두면 나중에 자동화 할 수 있을지도..?
+※ 데모 렐름에 대해서도 ssl 제외 설정이 필요한데, 다행히도 한 번 로그인 되면 화면에서 설정 가능합니다.
+   demo Realm 의 Realm settings 메뉴에서 Login 탭을 선택하고, Require SSL 항목 값을 none 으로 설정하시면 됩니다.
+
+※ 그러고 보니 kcadm.sh 을 잘 이용하면 자동화가 가능하겠네요..
 
 Once created set a friendly Display name for the realm, for 
 example `Demo SSO`.
