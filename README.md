@@ -553,6 +553,21 @@ email based login you will be prompted to configure WebAuthn. You'll need a WebA
 현재 깔리는 Keycloak은 재시작하면 모든 설정을 잃어버립니다. 이걸 막으려면 다음 디렉터리를 storage 로 연결해야 합니다.
 <pre><code>/opt/jboss/keycloak/standalone/data</pre></code>
 
+virtualbox 에서라면 대략 이런 방법으로 현재 떠 있는 keycloak 디렉터리를 밖으로 보관하고 이를 이용해 다시 띄우시면 됩니다.
+<pre><code>$ docker cp demo-keycloak:/opt/jboss/keycloak/standalone/data /vagrant/keycloak/test1/
+
+$ docker stop demo-keycloak
+
+$ docker rm demo-keycloak
+
+$ docker run --name demo-keycloak -e KEYCLOAK_USER=admin -e KEYCLOAK_PASSWORD=admin \
+-e KEYCLOAK_HOSTNAME=keycloak.k8s.com -p 8080:8080 -v /vagrant/keycloak/test1/data:/opt/jboss/keycloak/standalone/data  \
+--net demo-network demo-keycloak 
+
+</code></pre>
+
+
+
 # database 연결
 
 Keycloak은 아무런 설정을 하지 않으면 자체 h2 db 를 사용합니다. 이 데이터는 위의 .../standalone/data 밑에 생성되므로 
