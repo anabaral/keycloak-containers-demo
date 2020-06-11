@@ -614,6 +614,52 @@ jenkins는 브라우저 통신만으로 토큰을 받아오는 js-console 과 �
     - /var/jenkins_home/config.xml 파일의 이전 상태를 백업해 둡니다. 
     - 설정에 문제가 생기면 원복하고 재시작하면 됩니다.
 
+# SSL 통신
+
+당연한 이야기지만, 실 운영환경이라면 SSL(https) 통신이 되어야 합니다.
+
+몇 가지 시행착오 및 테스트를 거쳐 성공은 시켜 보았습니다. 테스트 환경의 한계를 감안해서 보아 주세요.
+
+<pre><code># 적당한 위치에서 사설 인증서 생성.
+VM host$ openssl req -x509 -new -nodes -days 365 -keyout tls.key -out tls.crt
+...
+Common Name (e.g. server FQDN or YOUR name) []:keycloak.k8s.com
+...
+# 이후 keycloak docker 실행 시 옵션 사용  -v ${인증서생성위치절대경로}:/etc/x509/https
+# 이를테면 아래와 같이 실행합니다:
+docker run --name demo-keycloak -e KEYCLOAK_USER=admin -e KEYCLOAK_PASSWORD=admin \
+-e KEYCLOAK_HOSTNAME=keycloak.k8s.com -p 8080:8080 -p 443:8443 -v /vagrant/keycloak/test1/data:/opt/jboss/keycloak/standalone/data  \
+-v /vagrant/keycloak/test1/ssl:/etc/x509/https --net demo-network demo-keycloak 
+</code></pre>
+
+위와 같이 띄우면 <code>https://keycloak.k8s.com/ </code> 와 같은 URL로 접근 가능해집니다. 물론 기존 URL로도 접근됩니다.
+
+문제는 연동되는 어플리케이션에서 https 로 붙을 수 있어야 하겠죠. 여기서는 Jenkins 에 대해서 테스트해 보았습니다.
+<pre><code>docker run -p 9080:8080 --name jenkins --net demo-network --add-host keycloak.k8s.com:192.128.205.10 \
+-v /vagrant/keycloak/test1/jenkins_home:/var/jenkins_home \
+-v /vagrant/keycloak/test1/caacerts:/usr/local/openjdk-8/jre/lib/security/cacerts jenkins/jenkins  </code></pre>
+
+위에서 마지막 옵션이 키포인트입니다. 이미지 안의 cacerts 파일을 변조해야 하는데 이걸 안하면 Keycloak 인증을 획득한 이후에
+java가 사설인증서를 신뢰하지 않아서 생기는 오류가 뜹니다: 
+<pre><code>2020-06-11 07:42:49.639+0000 [id=61]    SEVERE  o.j.p.KeycloakSecurityRealm#doFinishLogin: Original exception
+sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target
+...
+Caused: sun.security.validator.ValidatorException: PKIX path building failed
+...</code></pre>
+
+더 좋은 방법이 있을지도 모르지만, 일단 제가 한 변조방법은 다음과 같습니다: 
+1) 일단 jenkins 이미지를 띄웁니다.
+2) <code>docker cp </code> 명령으로 앞서 만들어 둔 tls.crt 파일을 적당한 위치에 넣어둡니다.
+3) <code>docker exec</code> 명령으로 컨테이너 안에 들어가 다음을 수행합니다.
+   <pre><code>keytool -importcert -keystore ${JAVA_HOME}/jre/lib/security/cacerts -storepass changeit -file tls.crt -alias letsencrypt</code></pre>
+   이렇게 하면 신뢰하는 인증서(인증기관?) 목록을 보관하는 cacerts 파일에 파일이 추가됩니다.
+4) 나와서 <code>docker cp </code> 명령으로 변조된 cacerts 파일을 컨테이너 밖으로 꺼냅니다.
+5) 위에 기술한 명령어처럼 jenkins 를 띄우시면 됩니다. 기존에 이미 띄운 jenkins가 있다고요? 그건 중지하고 지워야겠죠. 경험상 java가 뜬 상태에서 동적으로 변경할 수 없습니다.
+
+만약 컨테이너에 깔린 java와 동일한 java가 밖에 이미 있다면, 그 java의 cacerts 파일을 작업해 바로 집어넣을 수도 있을 겁니다. 
+혹은 아예 jenkins 이미지를 새로운 Dockerfile로 바꾸어 적용하는 방법도 있을 겁니다. 선택하기 나름이죠.
+
+
 ## Cool stuff we didn't cover!
 
 ### Clustering and Caching
