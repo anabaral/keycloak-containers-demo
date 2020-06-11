@@ -601,7 +601,15 @@ jenkins는 브라우저 통신만으로 토큰을 받아오는 js-console 과 �
   - Add Client:
     - client id: jenkins
     - root url: 접속 url. jenkins 처음 접속할 때 보임. 예) http://jenkins.k8s.com:9080/ 
-    - installation 탭 - format option을 keycloak oidc json 으로 선택하면 json 텍스트가 보이는데 이를 복사
+    - installation 탭을 택하고 format option을 keycloak oidc json 으로 선택하면 보이는 json 텍스트를 복사. 대략 다음과 같은 형태
+      <pre><code>{
+        "realm": "ci",
+        "auth-server-url": "http://keycloak.k8s.com:8080/auth/",
+        "ssl-required": "none",
+        "resource": "jenkins",
+        "public-client": true,
+        "confidential-port": 0
+      }</code></pre>
 - jenkins 에서
   - '시스템 설정' 에서 keycloak json 붙여넣는 대목이 있음. 위의 텍스트를 붙여넣기.
   - 'validate each request' 라는 체크박스는 비워둠. (필요할 수도 있지만.. 테스트해보면 비워둘 때 문제는 없었음)
@@ -614,11 +622,12 @@ jenkins는 브라우저 통신만으로 토큰을 받아오는 js-console 과 �
     - /var/jenkins_home/config.xml 파일의 이전 상태를 백업해 둡니다. 
     - 설정에 문제가 생기면 원복하고 재시작하면 됩니다.
 
-# SSL 통신
+# SSL 통신(jenkins)
 
-당연한 이야기지만, 실 운영환경이라면 SSL(https) 통신이 되어야 합니다.
+당연한 이야기지만, 실 운영환경이라면 인증 등의 통신에서 SSL(https)이 되어야 합니다.
 
 몇 가지 시행착오 및 테스트를 거쳐 성공은 시켜 보았습니다. 테스트 환경의 한계를 감안해서 보아 주세요.
+만약 이미 jenkins를 띄웠다면 keycloak 인증을 일단 꺼 두시는 게 안전합니다. 어차피 jenkins를 다시 띄울 때 리셋된다면.. 그냥 잊으세요.
 
 <pre><code># 적당한 위치에서 사설 인증서 생성.
 VM host$ openssl req -x509 -new -nodes -days 365 -keyout tls.key -out tls.crt
@@ -658,6 +667,9 @@ Caused: sun.security.validator.ValidatorException: PKIX path building failed
 
 만약 컨테이너에 깔린 java와 동일한 java가 밖에 이미 있다면, 그 java의 cacerts 파일을 작업해 바로 집어넣을 수도 있을 겁니다. 
 혹은 아예 jenkins 이미지를 새로운 Dockerfile로 바꾸어 적용하는 방법도 있을 겁니다. 선택하기 나름이죠.
+
+아무튼, 이렇게 jenkins를 다시 띄우면 앞서 keycloak 에서 복사해다 jenkins에 붙여넣기 했던 그 'keycloak OIDC json' 작업을 다시 해야 합니다.
+어떻게 이것을 기존에 띄운 상태에서 깔끔하게 변경할 수 있을지는.. 글쎄요, 고민 좀 해 봐야겠네요.
 
 
 ## Cool stuff we didn't cover!
