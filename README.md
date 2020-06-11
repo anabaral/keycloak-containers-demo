@@ -9,9 +9,10 @@ Keycloak을 실습해 보기 좋은 데모가 구성되어 있어 fork 해 왔�
 <pre><code>sudo apt install default-jdk </code></pre>
 
 ※ PC가 Windows라는 가정하에, %windir%\system32\drivers\etc\hosts 파일을 수정합니다. 제 다른 프로젝트 (virtualbox에 kubernetes 띄우기) 에서도 비슷한 일을 했습니다. 
-<pre><code>192.128.205.10   keycloak.k8s.com  demo.k8s.com</code></pre>
+<pre><code>192.128.205.10   keycloak.k8s.com  demo.k8s.com jenkins.k8s.com </code></pre>
 
 ※ 여기서는 keycloak 이 뜨는 호스트와 클라이언트(demo) 가 뜨는 호스트가 동일합니다. 당연히 실 환경에선 다를 수 있죠.
+   또한 fork한 예제와 달리 jenkins 도 구동시켜 볼 생각이라 이것도 추가해 두었습니다.
 
 ※ 적당한 디렉터리에서 이 프로젝트를 가져옵니다.
 <pre><code>git clone https://github.com/anabaral/keycloak-containers-demo</code></pre>
