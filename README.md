@@ -96,7 +96,8 @@ docker build -t demo-js-console js-console    # 수정 후 빌드
 ※ 이것은 다음을  의미합니다: 
 1) 웹 어플리케이션에서는 SSO를 위해 keycloak 의 로그인 창을 접근한다는 것
 2) 웹 어플리케이션에서 인증을 얻기 위해 <code> var kc = Keycloak(); </code> 와 같은 코드를 사용하는데, 
-   이 때 인자가 없으면 웹 어플리케이션 자신의 /keycloak.json 정보를 보낸다는 것 (어떤 realm과 어떤 url을 사용하는지)
+   이 때 인자가 없으면 웹 어플리케이션 자신의 /keycloak.json 정보를 보낸다는 것 (어떤 realm과 어떤 url을 사용하는지).
+   이 keycloak.json 은 사실 keycloak 에서 client 설정할 때 얻는 인증정보(keycloak oidc json)입니다. 밑에 jenkins 설정에서 다시 언급됩니다. 
 3) 위 두 개에서 문제가 있으면 (이를테면 localhost 같이 엉뚱한 곳을 바라본다면) 인증이 안된다는 것
 
 Then run it with:
